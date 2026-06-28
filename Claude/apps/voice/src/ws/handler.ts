@@ -2,6 +2,12 @@ import { WebSocket } from 'ws';
 import Anthropic from '@anthropic-ai/sdk';
 import { getClientByTwilioPhone, ClientConfig } from '../lib/client-config.js';
 import { buildSystemPrompt } from './prompts.js';
+import {
+  sanitizeUserText,
+  extractText,
+  sanitizeContentForHistory,
+  FALLBACK_REPLY,
+} from '../lib/ai-safety.js';
 import { voiceTools, executeTool } from './tools.js';
 import { callSummaryNotification } from '../services/notifications.js';
 import { db, calls, leads } from '@serviceline/db';
@@ -184,7 +190,7 @@ export async function handleWebSocket(ws: WebSocket) {
       if (!client) return; // No valid client — ignore
 
       const prompt = msg as ConversationRelayPrompt;
-      messageHistory.push({ role: 'user', content: prompt.voicePrompt });
+      messageHistory.push({ role: 'user', content: sanitizeUserText(prompt.voicePrompt) });
 
       // Cap history to prevent memory growth
       if (messageHistory.length > AI.maxHistory) { // MAX_HISTORY — now sourced from @serviceline/config
@@ -253,18 +259,15 @@ export async function handleWebSocket(ws: WebSocket) {
 
       if (toolUseBlocks.length === 0) {
         // Pure text response — send to caller and exit loop
-        const text = response.content
-          .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-          .map((b) => b.text)
-          .join('');
+        const text = extractText(response.content) || FALLBACK_REPLY;
 
-        messageHistory.push({ role: 'assistant', content: response.content });
+        messageHistory.push({ role: 'assistant', content: sanitizeContentForHistory(response.content) });
         ws.send(JSON.stringify({ type: 'text', token: text, last: true }));
         return;
       }
 
       // Execute ALL tool calls
-      messageHistory.push({ role: 'assistant', content: response.content });
+      messageHistory.push({ role: 'assistant', content: sanitizeContentForHistory(response.content) });
 
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
       for (const toolBlock of toolUseBlocks) {

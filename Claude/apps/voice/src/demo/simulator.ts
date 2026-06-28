@@ -10,6 +10,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import { buildSystemPrompt } from '../ws/prompts.js';
 import { voiceTools, executeTool } from '../ws/tools.js';
 import { buildCallBrief, formatBriefForSms, CallBrief } from '../lib/call-brief.js';
+import {
+  sanitizeUserText,
+  extractText,
+  sanitizeContentForHistory,
+  FALLBACK_REPLY,
+} from '../lib/ai-safety.js';
 import { resolveOnCall, OnCallResult } from '../services/on-call.js';
 import { db, clients, leads, calls, appointments, eq } from '@serviceline/db';
 import { AI } from '@serviceline/config';
@@ -134,7 +140,7 @@ export async function sendMessage(
   session: SimulatorSession,
   callerMessage: string,
 ): Promise<string> {
-  session.messageHistory.push({ role: 'user', content: callerMessage });
+  session.messageHistory.push({ role: 'user', content: sanitizeUserText(callerMessage) });
 
   if (!session.config.useRealAI) {
     return handleMockResponse(session, callerMessage);
@@ -162,11 +168,8 @@ async function processWithToolLoop(
     );
 
     if (toolUseBlocks.length === 0) {
-      const text = response.content
-        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-        .map((b) => b.text)
-        .join('');
-      session.messageHistory.push({ role: 'assistant', content: response.content });
+      const text = extractText(response.content) || FALLBACK_REPLY;
+      session.messageHistory.push({ role: 'assistant', content: sanitizeContentForHistory(response.content) });
 
       session.events.push({
         type: 'ai_response',
@@ -178,7 +181,7 @@ async function processWithToolLoop(
     }
 
     // Execute tool calls
-    session.messageHistory.push({ role: 'assistant', content: response.content });
+    session.messageHistory.push({ role: 'assistant', content: sanitizeContentForHistory(response.content) });
     const toolResults: Anthropic.ToolResultBlockParam[] = [];
 
     for (const toolBlock of toolUseBlocks) {
