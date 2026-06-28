@@ -1,8 +1,10 @@
+import bcrypt from "bcryptjs";
 import { db, schema } from "@/lib/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import IndustryServiceSelector from "@/components/admin/IndustryServiceSelector";
 import { getTemplateOrThrow } from "@serviceline/templates";
+import { requireAdminSession } from "@/lib/auth";
 
 function generateSlug(name: string): string {
   const base = name
@@ -84,6 +86,7 @@ export default async function NewClientPage({
 
   async function createClient(formData: FormData) {
     "use server";
+    await requireAdminSession();
 
     const name = formData.get("name") as string;
     const ownerName = formData.get("ownerName") as string;
@@ -132,7 +135,7 @@ export default async function NewClientPage({
         avgTicketValue: template.defaultTicketValue.toString(),
         aiSystemPrompt,
         plan: plan || "starter",
-        dashboardPin: pin,
+        dashboardPin: await bcrypt.hash(pin, 10),
         status: "active",
       })
       .returning();
