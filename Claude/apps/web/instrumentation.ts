@@ -25,6 +25,8 @@ export async function register() {
     for (const err of errors) {
       console.error(`  - ${err}`);
     }
-    process.exit(1);
+    // Throw (not process.exit) — Next's instrumentation bundler disallows
+    // process.exit, and a thrown error aborts startup just the same.
+    throw new Error(`[startup] Invalid configuration: ${errors.join('; ')}`);
   }
 }

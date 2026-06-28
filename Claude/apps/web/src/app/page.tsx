@@ -430,7 +430,7 @@ export default function Home() {
         <p className="text-[11px] font-semibold text-amber-500 uppercase tracking-widest mb-3 text-center">FAQ</p>
         <h2 className="text-2xl font-bold text-center mb-8">Questions contractors ask us</h2>
 
-        <Accordion type="single" collapsible className="space-y-1.5">
+        <Accordion className="space-y-1.5">
           {[
             { q: "Does it actually sound good on the phone?", a: "Yes. Callers usually don't know it's AI until they ask. It uses natural speech, talks like a dispatcher (short and direct), and never says 'Great question!' or 'I'd be happy to help.' If someone asks if it's a robot, it says yes — honestly." },
             { q: "What happens during a real emergency?", a: "The AI detects emergency keywords — burst pipe, gas smell, flooding, sewage, no heat — and immediately texts your on-call person with the caller's info. No qualifying questions. No delay. Address and phone number, sent in seconds." },
