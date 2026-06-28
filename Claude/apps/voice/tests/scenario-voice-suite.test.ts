@@ -311,7 +311,7 @@ describe('Failure mode prevention', () => {
 
   it('FM5: AI does not loop the same question (max_tokens + tool iteration limits)', async () => {
     const handlerSrc = await import('fs').then(fs =>
-      fs.readFileSync('/Users/clawdbot/Claude/apps/voice/src/ws/handler.ts', 'utf-8'));
+      fs.readFileSync(new URL('../src/ws/handler.ts', import.meta.url), 'utf-8'));
     expect(handlerSrc).toContain('MAX_TOOL_ITERATIONS');
     expect(handlerSrc).toContain('MAX_HISTORY');
   });
@@ -329,7 +329,7 @@ describe('Failure mode prevention', () => {
 
   it('FM8: booking confirmation exists in tool flow', async () => {
     const toolsSrc = await import('fs').then(fs =>
-      fs.readFileSync('/Users/clawdbot/Claude/apps/voice/src/ws/tools.ts', 'utf-8'));
+      fs.readFileSync(new URL('../src/ws/tools.ts', import.meta.url), 'utf-8'));
     expect(toolsSrc).toContain('book_appointment');
     expect(toolsSrc).toContain('Appointment booked successfully');
   });

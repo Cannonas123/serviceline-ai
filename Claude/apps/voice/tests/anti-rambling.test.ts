@@ -156,7 +156,7 @@ describe('Voice-friendly formatting instructions', () => {
 describe('max_tokens enforcement', () => {
   it('handler uses max_tokens of 150, not 300+', async () => {
     const handlerSource = await import('fs').then((fs) =>
-      fs.readFileSync('/Users/clawdbot/Claude/apps/voice/src/ws/handler.ts', 'utf-8'),
+      fs.readFileSync(new URL('../src/ws/handler.ts', import.meta.url), 'utf-8'),
     );
 
     // All Claude API calls should use 150, not 300
@@ -177,7 +177,7 @@ describe('max_tokens enforcement', () => {
 describe('Interrupt handling', () => {
   it('handler type includes interrupt message', async () => {
     const handlerSource = await import('fs').then((fs) =>
-      fs.readFileSync('/Users/clawdbot/Claude/apps/voice/src/ws/handler.ts', 'utf-8'),
+      fs.readFileSync(new URL('../src/ws/handler.ts', import.meta.url), 'utf-8'),
     );
 
     expect(handlerSource).toContain("type: 'interrupt'");
@@ -186,7 +186,7 @@ describe('Interrupt handling', () => {
 
   it('handler truncates assistant message on interrupt', async () => {
     const handlerSource = await import('fs').then((fs) =>
-      fs.readFileSync('/Users/clawdbot/Claude/apps/voice/src/ws/handler.ts', 'utf-8'),
+      fs.readFileSync(new URL('../src/ws/handler.ts', import.meta.url), 'utf-8'),
     );
 
     // Should find and truncate the last assistant message
@@ -196,7 +196,7 @@ describe('Interrupt handling', () => {
 
   it('handler processes interrupt before prompt (correct order)', async () => {
     const handlerSource = await import('fs').then((fs) =>
-      fs.readFileSync('/Users/clawdbot/Claude/apps/voice/src/ws/handler.ts', 'utf-8'),
+      fs.readFileSync(new URL('../src/ws/handler.ts', import.meta.url), 'utf-8'),
     );
 
     // Interrupt handling should come before prompt handling in the code
