@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import bcrypt from "bcryptjs";
 import { createAdminSession, ADMIN_COOKIE } from "@/lib/auth";
+import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@servicelineai.com";
 
@@ -16,6 +17,10 @@ function passwordOk(password: string): boolean {
 
 export async function POST(request: Request) {
   try {
+    // Throttle password guessing: 6 attempts / 5 min per IP.
+    const rl = rateLimit(`adminlogin:${clientIp(request)}`, 6, 5 * 60_000);
+    if (!rl.allowed) return tooMany(rl.retryAfter);
+
     const { email, password } = await request.json();
     if (!email || !password) {
       return NextResponse.json(

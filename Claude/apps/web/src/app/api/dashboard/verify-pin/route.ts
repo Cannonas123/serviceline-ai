@@ -3,10 +3,15 @@ import bcrypt from "bcryptjs";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { createDashboardSession, DASHBOARD_COOKIE } from "@/lib/auth";
+import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
     const { slug, pin } = await request.json();
+
+    // Throttle PIN guessing: 8 attempts / 5 min per IP+dashboard.
+    const rl = rateLimit(`pin:${clientIp(request)}:${slug ?? "?"}`, 8, 5 * 60_000);
+    if (!rl.allowed) return tooMany(rl.retryAfter);
 
     if (!slug || !pin) {
       return NextResponse.json(
