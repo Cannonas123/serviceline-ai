@@ -26,14 +26,37 @@ export interface OnCallResult {
   isOwner: boolean; // true if falling back to owner (no schedule match)
 }
 
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+};
+
+/** Current weekday (0=Sun) and HH:MM in the given IANA timezone (server-local if unset). */
+function localDayAndTime(timeZone?: string): { dayOfWeek: number; time: string } {
+  const now = new Date();
+  if (!timeZone) {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return { dayOfWeek: now.getDay(), time: `${pad(now.getHours())}:${pad(now.getMinutes())}` };
+  }
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(now);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
+  return {
+    dayOfWeek: WEEKDAY_INDEX[get('weekday')] ?? now.getDay(),
+    time: `${get('hour')}:${get('minute')}`,
+  };
+}
+
 /**
  * Resolve who is currently on-call for a client.
  * Returns the on-call contact, or the owner as fallback.
  */
 export async function resolveOnCall(client: ClientConfig): Promise<OnCallResult> {
-  const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=Sunday
-  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  // On-call schedules are stored in the contractor's local wall-clock time, but a
+  // production server runs in UTC — so day/time must be evaluated in the business's
+  // timezone, not the server's. Set DEFAULT_TIMEZONE (IANA, e.g. America/Chicago)
+  // in production. TODO: store timezone per client for multi-region operators.
+  const { dayOfWeek, time: currentTime } = localDayAndTime(process.env.DEFAULT_TIMEZONE);
 
   // Find schedule entries for this client + current day
   const scheduleEntries = await db
