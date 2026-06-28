@@ -198,13 +198,15 @@ export async function executeTool(
         return { error: 'One or more fields exceed maximum length.' };
       }
 
-      // Validate phone number format
-      if (!isValidPhone(input.phone)) {
-        return { error: `Invalid phone number format: "${input.phone}". Phone must be in E.164 format (e.g., +15551234567).` };
-      }
+      // Never block an emergency on phone formatting. Dropping (or delaying) an
+      // escalation because the model passed an oddly-formatted number is far worse
+      // than an imperfect callback number — escalate regardless, just flag it.
+      const callerPhone = isValidPhone(input.phone)
+        ? input.phone
+        : `${input.phone} (unverified — check caller ID)`;
 
       try {
-        const emergencyMsg = `🚨 EMERGENCY: ${input.issue}\nCaller: ${input.phone}${input.address ? `\nAddress: ${input.address}` : ''}${input.name ? `\nName: ${input.name}` : ''}\n\nCall them back ASAP!`;
+        const emergencyMsg = `🚨 EMERGENCY: ${input.issue}\nCaller: ${callerPhone}${input.address ? `\nAddress: ${input.address}` : ''}${input.name ? `\nName: ${input.name}` : ''}\n\nCall them back ASAP!`;
         await notifyOnCall(client, emergencyMsg, 'emergency');
       } catch (smsErr) {
         console.error('EMERGENCY SMS failed:', smsErr instanceof Error ? smsErr.message : 'Unknown error');
