@@ -236,7 +236,7 @@ const INDUSTRY_CONFIGS: IndustryConfig[] = [
 ];
 
 // Pre-hashed bcrypt for "123456"
-const DEMO_PIN_HASH = '$2b$10$LqMVwMXXxGODMjEDPCKGxuw3lFhXCLzJ0kGqM1EWCcFxPYJ8NaVGe';
+const DEMO_PIN_HASH = '$2b$10$5HxlGdGFd.9O8sHKo/9O5OXkVRYIahYWZCScB5KgpwXWQr4626g.G';
 
 // ── Main ────────────────────────────────────────────────────────────
 async function seed() {

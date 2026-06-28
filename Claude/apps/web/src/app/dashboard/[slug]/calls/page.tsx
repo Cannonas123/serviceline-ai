@@ -1,3 +1,4 @@
+import { requireDashboardSession } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
@@ -77,6 +78,7 @@ export default async function CallsPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  await requireDashboardSession(slug);
 
   const client = await db
     .select()

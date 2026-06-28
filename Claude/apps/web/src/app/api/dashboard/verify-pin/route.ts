@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
+import { createDashboardSession, DASHBOARD_COOKIE } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -13,31 +15,36 @@ export async function POST(request: Request) {
       );
     }
 
-    if (pin.length < 4) {
+    if (typeof pin !== "string" || pin.length < 4) {
       return NextResponse.json(
         { error: "PIN must be at least 4 digits" },
         { status: 400 }
       );
     }
 
-    // Look up client by slug
+    // Look up client by slug (including the hashed PIN)
     const client = await db
-      .select({ id: schema.clients.id, name: schema.clients.name })
+      .select({
+        id: schema.clients.id,
+        name: schema.clients.name,
+        dashboardPin: schema.clients.dashboardPin,
+      })
       .from(schema.clients)
       .where(eq(schema.clients.slug, slug))
       .then((rows) => rows[0]);
 
     if (!client) {
-      return NextResponse.json(
-        { error: "Dashboard not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Dashboard not found" }, { status: 404 });
     }
 
-    // Demo mode: accept any 4+ digit PIN
-    // In production, compare bcrypt hash:
-    // const valid = await bcrypt.compare(pin, client.dashboardPin);
-    // if (!valid) return NextResponse.json({ error: "Invalid PIN" }, { status: 401 });
+    // Constant-time bcrypt comparison against the stored hash.
+    const valid =
+      !!client.dashboardPin && (await bcrypt.compare(pin, client.dashboardPin));
+    if (!valid) {
+      return NextResponse.json({ error: "Invalid PIN" }, { status: 401 });
+    }
+
+    const token = await createDashboardSession(client.id, slug);
 
     const response = NextResponse.json({
       success: true,
@@ -45,8 +52,8 @@ export async function POST(request: Request) {
       clientName: client.name,
     });
 
-    // Set a simple session cookie (demo mode)
-    response.cookies.set("dashboard_session", client.id, {
+    // Signed, httpOnly session cookie, scoped to this tenant's path.
+    response.cookies.set(DASHBOARD_COOKIE, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

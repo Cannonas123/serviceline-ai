@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 
 export default function PinEntryPage() {
@@ -11,24 +11,6 @@ export default function PinEntryPage() {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // Demo slugs bypass the PIN gate entirely
-  const isDemo = slug.includes("demo");
-
-  useEffect(() => {
-    if (isDemo) {
-      router.replace(`/dashboard/${slug}/overview`);
-    }
-  }, [isDemo, slug, router]);
-
-  // Show nothing while redirecting demo users
-  if (isDemo) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0f1a]">
-        <div className="text-slate-500 text-sm">Loading dashboard...</div>
-      </div>
-    );
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

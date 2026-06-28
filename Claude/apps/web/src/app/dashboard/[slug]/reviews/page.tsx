@@ -1,3 +1,4 @@
+import { requireDashboardSession } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { eq, desc, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
@@ -10,6 +11,7 @@ export default async function ReviewsPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  await requireDashboardSession(slug);
 
   const client = await db
     .select()
