@@ -38,3 +38,34 @@ export function sanitizeContentForHistory(
     ? cleaned
     : ([{ type: 'text', text: FALLBACK_REPLY }] as Anthropic.ContentBlock[]);
 }
+
+/** Transient (retryable) API failures — overload, rate limit, network blips. */
+export function isTransientApiError(msg: string): boolean {
+  return /overloaded|rate.?limit|\b429\b|\b503\b|\b529\b|timeout|ETIMEDOUT|fetch failed|ECONNRESET|socket hang|premature close/i.test(
+    msg,
+  );
+}
+
+/** Retry a call on transient errors with linear backoff. Non-transient errors
+ *  (e.g. a 400 or auth failure) throw immediately — no point retrying those. */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  attempts = 2,
+  baseMs = 400,
+): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i <= attempts; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      if (i < attempts && isTransientApiError(msg)) {
+        await new Promise((r) => setTimeout(r, baseMs * (i + 1)));
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr;
+}

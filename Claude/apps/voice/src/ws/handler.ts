@@ -6,6 +6,7 @@ import {
   sanitizeUserText,
   extractText,
   sanitizeContentForHistory,
+  withRetry,
   FALLBACK_REPLY,
 } from '../lib/ai-safety.js';
 import { voiceTools, executeTool } from './tools.js';
@@ -211,13 +212,12 @@ export async function handleWebSocket(ws: WebSocket) {
         await processWithToolLoop(anthropic, ws, client);
       } catch (err) {
         console.error('Claude API error:', err instanceof Error ? err.message : 'Unknown error');
-        ws.send(
-          JSON.stringify({
-            type: 'text',
-            token: "I'm having a little trouble. Could you repeat that?",
-            last: true,
-          }),
-        );
+        const fallback = "I'm having a little trouble. Could you repeat that?";
+        // Record a fallback assistant turn so the conversation stays role-alternating.
+        // Without this, the caller's next prompt would create two consecutive user
+        // messages and the following request would 400 — turning one blip into a dead call.
+        messageHistory.push({ role: 'assistant', content: fallback });
+        ws.send(JSON.stringify({ type: 'text', token: fallback, last: true }));
       }
     }
   }
@@ -245,13 +245,15 @@ export async function handleWebSocket(ws: WebSocket) {
   /** Process Claude response, handling tool calls in a loop */
   async function processWithToolLoop(anthropic: Anthropic, ws: WebSocket, clientRef: ClientConfig) {
     for (let iteration = 0; iteration < AI.maxToolIterations; iteration++) {
-      const response = await anthropic.messages.create({
-        model: AI.model,
-        max_tokens: AI.voiceMaxTokens,
-        system: systemPrompt,
-        tools: voiceTools,
-        messages: messageHistory,
-      });
+      const response = await withRetry(() =>
+        anthropic.messages.create({
+          model: AI.model,
+          max_tokens: AI.voiceMaxTokens,
+          system: systemPrompt,
+          tools: voiceTools,
+          messages: messageHistory,
+        }),
+      );
 
       const toolUseBlocks = response.content.filter(
         (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
