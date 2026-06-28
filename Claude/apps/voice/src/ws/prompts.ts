@@ -6,6 +6,8 @@ interface PromptContext {
   serviceArea: string;
   industry?: string;
   customPrompt?: string | null;
+  /** 1-indexed month override for seasonal context. Defaults to the current month. */
+  month?: number;
 }
 
 /**
@@ -55,7 +57,7 @@ export function buildSystemPrompt(ctx: PromptContext): string {
     : '';
 
   // ── Industry-specific sections ──
-  const industrySection = template ? buildIndustrySection(template) : '';
+  const industrySection = template ? buildIndustrySection(template, ctx.month) : '';
 
   return `You are an AI phone assistant for ${ctx.name}, a ${serviceList} company serving ${ctx.serviceArea}.
 
@@ -121,7 +123,7 @@ ${emergencyList}
 /**
  * Builds the industry-specific section with prompt rules, FAQ, and seasonal context.
  */
-function buildIndustrySection(template: IndustryTemplate): string {
+function buildIndustrySection(template: IndustryTemplate, month?: number): string {
   const parts: string[] = [];
 
   // Industry-specific collection rules
@@ -133,7 +135,7 @@ function buildIndustrySection(template: IndustryTemplate): string {
   }
 
   // Seasonal context
-  const currentMonth = new Date().getMonth() + 1; // 1-indexed
+  const currentMonth = month ?? new Date().getMonth() + 1; // 1-indexed (injectable for deterministic tests)
   const activeHints = template.seasonalHints.filter((h) =>
     h.months.includes(currentMonth)
   );

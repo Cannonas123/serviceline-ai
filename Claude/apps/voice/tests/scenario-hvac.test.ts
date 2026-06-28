@@ -68,6 +68,7 @@ const PROMPT = buildSystemPrompt({
   services: CONFIG.services,
   serviceArea: CONFIG.serviceArea,
   industry: 'hvac',
+  month: 3, // pin to spring so seasonal assertions are deterministic year-round
 });
 
 // ==========================================================================
