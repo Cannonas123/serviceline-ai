@@ -2,6 +2,7 @@ import { db, schema } from "@/lib/db";
 import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import SimulateCallButton from "./SimulateCallButton";
+import BillingActions from "./BillingActions";
 
 export const dynamic = "force-dynamic";
 
@@ -125,6 +126,11 @@ export default async function ClientDetailPage({
         </div>
         <SimulateCallButton clientId={client.id} />
       </div>
+
+      <BillingActions
+        clientId={client.id}
+        subscriptionStatus={client.subscriptionStatus}
+      />
 
       {/* Client Info Card */}
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">

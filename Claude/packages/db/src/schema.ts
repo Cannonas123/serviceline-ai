@@ -25,6 +25,7 @@ export const clients = pgTable('clients', {
   plan: text('plan').notNull(), // 'starter' | 'pro'
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
+  subscriptionStatus: text('subscription_status'), // stripe: trialing|active|past_due|canceled|unpaid
   dashboardPin: text('dashboard_pin').notNull(), // bcrypt hash
   status: text('status').notNull().default('active'), // pilot|active|paused|churned
   pilotEndsAt: timestamp('pilot_ends_at', { withTimezone: true }),
