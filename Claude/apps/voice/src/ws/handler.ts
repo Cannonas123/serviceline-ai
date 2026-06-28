@@ -249,7 +249,9 @@ export async function handleWebSocket(ws: WebSocket) {
         anthropic.messages.create({
           model: AI.model,
           max_tokens: AI.voiceMaxTokens,
-          system: systemPrompt,
+          // Cache the (static) system prompt so later turns read it from cache
+          // (~10% of the input price) instead of re-billing ~2k tokens each call.
+          system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
           tools: voiceTools,
           messages: messageHistory,
         }),

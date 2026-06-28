@@ -158,7 +158,7 @@ async function processWithToolLoop(
     const response = await anthropic.messages.create({
       model: AI.model,
       max_tokens: AI.voiceMaxTokens,
-      system: session.systemPrompt,
+      system: [{ type: 'text', text: session.systemPrompt, cache_control: { type: 'ephemeral' } }],
       tools: voiceTools,
       messages: session.messageHistory,
     });
