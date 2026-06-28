@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { requireAdminSession } from "@/lib/auth";
+import { LogoutButton } from "@/components/admin/LogoutButton";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: "M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" },
@@ -7,11 +9,12 @@ const navItems = [
   { href: "/admin/clients/new", label: "New Client", icon: "M12 4.5v15m7.5-7.5h-15" },
 ];
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await requireAdminSession();
   return (
     <div className="flex min-h-screen bg-[#0a0f1a]">
       {/* Sidebar */}
@@ -45,9 +48,12 @@ export default function AdminLayout({
 
         {/* Status indicator */}
         <div className="absolute bottom-0 left-0 w-64 p-4 border-t border-slate-800/50">
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            System Online
+          <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              System Online
+            </span>
+            <LogoutButton />
           </div>
         </div>
       </aside>

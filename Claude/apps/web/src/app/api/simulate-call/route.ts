@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { getAdminSession } from "@/lib/auth";
 
 const firstNames = [
   "James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael",
@@ -48,6 +49,9 @@ function randomPhone(): string {
 
 export async function POST(request: Request) {
   try {
+    if (!(await getAdminSession())) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { clientId } = await request.json();
 
     if (!clientId) {
