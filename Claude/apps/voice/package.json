@@ -11,22 +11,23 @@
     "demo": "tsx src/demo/cli.ts"
   },
   "dependencies": {
-    "fastify": "^5.2.0",
-    "@fastify/websocket": "^11.0.0",
-    "@fastify/formbody": "^8.0.0",
-    "@fastify/rate-limit": "^10.2.0",
-    "@fastify/helmet": "^13.0.0",
-    "@fastify/cors": "^11.0.0",
     "@anthropic-ai/sdk": "^0.39.0",
-    "twilio": "^5.5.0",
+    "@fastify/cors": "^11.0.0",
+    "@fastify/formbody": "^8.0.0",
+    "@fastify/helmet": "^13.0.0",
+    "@fastify/rate-limit": "^10.2.0",
+    "@fastify/websocket": "^11.0.0",
     "@serviceline/config": "*",
     "@serviceline/db": "*",
-    "@serviceline/templates": "*"
+    "@serviceline/templates": "*",
+    "fastify": "^5.2.0",
+    "twilio": "^5.5.0"
   },
   "devDependencies": {
-    "vitest": "^3.0.0",
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
-    "@types/node": "^22.0.0"
+    "vitest": "^3.0.0"
   }
 }
